@@ -1,38 +1,87 @@
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JSlider;
+import javax.swing.Timer;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
-public class ConwaysGameOfLife extends JFrame implements ActionListener {
+public class ConwaysGameOfLife extends JFrame implements ActionListener, ChangeListener {
 	
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+	GameBoard gameBoard = new GameBoard();
+	
+	public int refreshCount;
 	
 	private void controller() {
 		createLifeMatrix();
 		debug(cellState);
-		gameOfLife();
-		debug(neighborState);
-		updateGrid();
-		debug(cellState);
+		//gameOfLife();
+		//debug(neighborState);
+		//updateGrid();
+		//debug(cellState);
 	}
 	
 	// These two variables store the dimensions of the matrix, and will be supplied by the user
-	int gridHeight = 20;
-	int gridWidth = 20;
+	public int gridHeight = 20;
+	public int gridWidth = 20;
 	
-	private int[][] cellState;
-	private int[][] neighborState;
+	public int[][] cellState;
+	public int[][] neighborState;
 	
+	public int refreshRate = 1000;
+	
+	protected Timer timer;
+	
+	protected class TimerCallback implements ActionListener {
+		
+		public void actionPerformed(ActionEvent e) {
+			//System.out.println("timer fired!");
+			//repaint();
+			
+			gameOfLife();
+			gameBoard.setNeighborState(neighborState);
+			//gameBoard.repaint();
+			updateGrid();
+			gameBoard.setCellState(cellState);
+			gameBoard.repaint();
+			cycleCount++;
+			cycleCountLabel.setText("Number of Cycles: " + cycleCount);
+			
+		}
+		
+	}
+	
+	public int getGridHeight() {
+		return this.gridHeight;
+	}
+
+	public int getGridWidth() {
+		return this.gridWidth;
+	}
+
+	public int[][] getCellState() {
+		return this.cellState;
+	}
+
+	public int[][] getNeighborState() {
+		return this.neighborState;
+	}
+
 	//This method initializes the grid based on parameters provided by the user
 	private void createLifeMatrix() {
+		refreshCount = 0;
+		
 		//2 matrices need to be created, one to store information about neighbors, and 1 to store the actual state of the cell
 		cellState = new int[gridHeight][gridWidth];
 		neighborState = new int[gridHeight][gridWidth];
@@ -49,9 +98,11 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener {
 		randomGridInitialization();
 	}
 	
+	double aliveChance = 0.5; //Determines the odds that a cell is alive
+	
 	//Each cell has a chance of being dead or alive
 	private void randomGridInitialization() {
-		double aliveChance = 0.5; //Determines the odds that a cell is alive
+		
 		//double random = Math.random();
 		for(int i = 0; i < gridHeight; i++) {
 			for(int j = 0; j < gridWidth; j++) {
@@ -59,8 +110,16 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener {
 				if(random < aliveChance) {
 					cellState[i][j] = 1;
 				}
+				if(random >= aliveChance) {
+					cellState[i][j] = 0;
+				}
 			}
 		}
+		
+		gameBoard.setCellState(this.cellState);
+		//gameBoard.setNeighborState(neighborState);
+		gameBoard.repaint();
+		
 	}
 	
 	private void updateGrid() {
@@ -74,6 +133,13 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener {
 				}
 			}
 		}
+		
+		refreshCount++;
+
+		gameBoard.setCellState(this.cellState);
+		//gameBoard.setNeighborState(neighborState);
+		gameBoard.repaint();
+		
 	}
 	
 	/*
@@ -293,6 +359,8 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener {
 				}
 			}
 		}
+		
+		gameBoard.setNeighborState(this.neighborState);
 	}
 	
 	private void printMatrix(int grid[][]) {
@@ -311,9 +379,98 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener {
 		printMatrix(grid);
 	}
 	
+	public int minimumRefresh;
+	public int defaultRefresh;
+	public int maximumRefresh;
+	
+
+	JLabel cycleCountLabel = new JLabel();
+	int cycleCount = 0;
+	
+	public ConwaysGameOfLife() {
+		JFrame frame = new JFrame("Conway's Game of Life");
+		frame.setLayout(new BorderLayout());
+		
+		JPanel options = new JPanel();
+		
+		//options.setLayout(new BoxLayout(options, BoxLayout.X_AXIS));
+		//gameBoard.setLayout(new FlowLayout());
+		options.setLayout(new GridLayout(3, 2));
+		
+		minimumRefresh = 500;
+		defaultRefresh = 1000;
+		maximumRefresh = 5000;
+		
+		JLabel frequencyLabel = new JLabel("Update Rate");
+		JLabel densityLabel = new JLabel("Amount of Alive Cells");
+		JLabel placeHolder1 = new JLabel();
+		cycleCountLabel.setText("Number of Cycles: " + 0);
+		
+		JLabel gameTitle = new JLabel("Conway's Game of Life");
+		JPanel title = new JPanel();
+		
+		title.setLayout(new GridLayout(1,2));
+		title.add(gameTitle);
+		title.add(cycleCountLabel);
+		
+		frequencyLabel.setHorizontalAlignment(JLabel.CENTER);
+		densityLabel.setHorizontalAlignment(JLabel.CENTER);
+		cycleCountLabel.setHorizontalAlignment(JLabel.CENTER);
+		
+		JSlider frequency = new JSlider(JSlider.HORIZONTAL, minimumRefresh, maximumRefresh, defaultRefresh);
+		frequency.setName("frequency");
+		frequency.addChangeListener(this);
+		
+		JSlider density = new JSlider(JSlider.HORIZONTAL, 0, 100, 50);
+		density.setName("density");
+		options.add(density);
+		density.addChangeListener(this);
+		
+		JButton playPause = new JButton("Play/Pause");
+		playPause.setName("Play/Pause");
+		playPause.addActionListener(this);
+		
+		JButton reset = new JButton("Reset");
+		reset.setName("Reset");
+		reset.addActionListener(this);
+		
+		options.add(reset);
+		options.add(playPause);
+		
+		//Layout fills each row before moving onto the next
+//		options.add(frequencyLabel);
+//		options.add(densityLabel);
+//		options.add(playPause);
+//		options.add(frequency);
+//		options.add(density);
+//		options.add(reset);
+//		options.add(placeHolder1);
+//		options.add(cycleCountLabel);
+		
+		options.add(frequencyLabel);
+		options.add(densityLabel);
+		options.add(frequency);
+		options.add(density);
+		options.add(playPause);
+		options.add(reset);
+		
+		
+		controller();
+	
+		frame.add(title, BorderLayout.NORTH);
+		frame.add(gameBoard, BorderLayout.CENTER);
+		frame.add(options, BorderLayout.SOUTH);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLocationByPlatform(true);
+        frame.pack();
+        frame.setVisible(true);
+        
+        timer = new Timer(refreshRate, new TimerCallback());
+		timer.start();
+	}
+	
 	public static void main(String[] args) {
-		ConwaysGameOfLife overlord = new ConwaysGameOfLife();
-		overlord.controller();
+		new ConwaysGameOfLife();
 	}
 	
 	private void sampleParse() {
@@ -324,4 +481,63 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener {
 		}
 	}
 
+	@Override
+	public void stateChanged(ChangeEvent e) {
+		// TODO Auto-generated method stub
+		JSlider source = (JSlider)e.getSource();
+		if(!source.getValueIsAdjusting()) {
+			System.out.println("Adjusting");
+			String name = source.getName();
+			if(name.equals("frequency")) {
+				//TODO change frequency and reset timer
+				refreshRate = (int)source.getValue();
+				timer.stop();
+				timer = new Timer(refreshRate, new TimerCallback());
+				timer.start();
+			}
+			if(name.equals("density")) {
+				//TODO change alive-chance for next run
+				aliveChance = (double)source.getValue()/100;
+			}
+		}
+	}
+	
+	int resumeCount = 0;
+
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		// TODO Auto-generated method stub
+		JButton source = (JButton)e.getSource();
+		System.out.println("Input read");
+		String name = source.getName();
+		
+		if(name.equals("Play/Pause")) {
+			System.out.println("Play/Pause");
+			//TODO pause or resume the simulation based on a counter
+			if (resumeCount % 2 == 0) {
+				//TODO pause
+				timer.stop();
+			}
+			if (resumeCount % 2 == 1) {
+				//TODO resume
+				System.out.println(resumeCount);
+				timer.stop();
+				timer = new Timer(refreshRate, new TimerCallback());
+				timer.start();
+			}
+			resumeCount++;
+		}
+		
+		if(name.equals("Reset")) {
+			//TODO reset the simulation
+			randomGridInitialization();
+			timer.stop();
+			timer = new Timer(refreshRate, new TimerCallback());
+			timer.start();
+			//TODO change cycle count to 0
+			cycleCount = 0;
+			resumeCount = 0;
+			cycleCountLabel.setText("Number of Cycles: " + 0);
+		}
+	}
 }
