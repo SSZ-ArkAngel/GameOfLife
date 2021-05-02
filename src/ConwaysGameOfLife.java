@@ -36,10 +36,10 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener, ChangeL
 	public int gridHeight = 20;
 	public int gridWidth = 20;
 	
-	public int[][] cellState;
-	public int[][] neighborState;
+	public int[][] cellState; //Stores information about the cells state
+	public int[][] neighborState; //Stores information about the number of numbers per cell
 	
-	public int refreshRate = 1000;
+	public int refreshRate = 1000; //Default update interval
 	
 	protected Timer timer;
 	
@@ -49,6 +49,7 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener, ChangeL
 			//System.out.println("timer fired!");
 			//repaint();
 			
+			//Here each iteration updates and repaints the gameBoard
 			gameOfLife();
 			gameBoard.setNeighborState(neighborState);
 			//gameBoard.repaint();
@@ -62,6 +63,7 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener, ChangeL
 		
 	}
 	
+	//Getters
 	public int getGridHeight() {
 		return this.gridHeight;
 	}
@@ -116,12 +118,14 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener, ChangeL
 			}
 		}
 		
+		//Calls a setter
 		gameBoard.setCellState(this.cellState);
 		//gameBoard.setNeighborState(neighborState);
 		gameBoard.repaint();
 		
 	}
 	
+	//Updates the grid, i.e. 3 neighbors = alive, not 3 = dead
 	private void updateGrid() {
 		for(int i = 0; i < gridHeight; i++) {
 			for(int j = 0; j < gridWidth; j++) {
@@ -359,10 +363,11 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener, ChangeL
 				}
 			}
 		}
-		
+		//Calls setter
 		gameBoard.setNeighborState(this.neighborState);
 	}
 	
+	//Used for debug prints the matrix
 	private void printMatrix(int grid[][]) {
 		for(int i = 0; i < gridHeight; i++) {
 			for(int j = 0; j < gridWidth; j++) {
@@ -372,6 +377,7 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener, ChangeL
 		}
 	}
 	
+	//Debug - currently used to print the grid
 	private void debug(int grid[][]) {
 		System.out.println();
 		System.out.println("Printing grid");
@@ -379,6 +385,7 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener, ChangeL
 		printMatrix(grid);
 	}
 	
+	//default values for the slider
 	public int minimumRefresh;
 	public int defaultRefresh;
 	public int maximumRefresh;
@@ -397,6 +404,7 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener, ChangeL
 		//gameBoard.setLayout(new FlowLayout());
 		options.setLayout(new GridLayout(3, 2));
 		
+		//sets values for the slider for frequency
 		minimumRefresh = 500;
 		defaultRefresh = 1000;
 		maximumRefresh = 5000;
@@ -473,6 +481,7 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener, ChangeL
 		new ConwaysGameOfLife();
 	}
 	
+	//sample code used: parses the matrix
 	private void sampleParse() {
 		for(int i = 0; i < gridHeight; i++) {
 			for(int j = 0; j < gridWidth; j++) {
@@ -483,20 +492,19 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener, ChangeL
 
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		// TODO Auto-generated method stub
 		JSlider source = (JSlider)e.getSource();
 		if(!source.getValueIsAdjusting()) {
 			System.out.println("Adjusting");
 			String name = source.getName();
 			if(name.equals("frequency")) {
-				//TODO change frequency and reset timer
+				//change frequency and reset timer
 				refreshRate = (int)source.getValue();
 				timer.stop();
 				timer = new Timer(refreshRate, new TimerCallback());
 				timer.start();
 			}
 			if(name.equals("density")) {
-				//TODO change alive-chance for next run
+				//change alive-chance for next run
 				aliveChance = (double)source.getValue()/100;
 			}
 		}
@@ -506,20 +514,19 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener, ChangeL
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
 		JButton source = (JButton)e.getSource();
 		System.out.println("Input read");
 		String name = source.getName();
 		
 		if(name.equals("Play/Pause")) {
 			System.out.println("Play/Pause");
-			//TODO pause or resume the simulation based on a counter
+			//pause or resume the simulation based on a counter
 			if (resumeCount % 2 == 0) {
-				//TODO pause
+				//pause
 				timer.stop();
 			}
 			if (resumeCount % 2 == 1) {
-				//TODO resume
+				//resume
 				System.out.println(resumeCount);
 				timer.stop();
 				timer = new Timer(refreshRate, new TimerCallback());
@@ -529,12 +536,12 @@ public class ConwaysGameOfLife extends JFrame implements ActionListener, ChangeL
 		}
 		
 		if(name.equals("Reset")) {
-			//TODO reset the simulation
+			//reset the simulation
 			randomGridInitialization();
 			timer.stop();
 			timer = new Timer(refreshRate, new TimerCallback());
 			timer.start();
-			//TODO change cycle count to 0
+			//change cycle count to 0
 			cycleCount = 0;
 			resumeCount = 0;
 			cycleCountLabel.setText("Number of Cycles: " + 0);
